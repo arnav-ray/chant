@@ -552,6 +552,188 @@
         let selectedChant = 'Om';
         let malaRotation = 0;
 
+        // ============================================
+        // ANALYTICS SYSTEM (Invisible to Users)
+        // ============================================
+        const Analytics = {
+            // Initialize analytics
+            init: function() {
+                if (!localStorage.getItem('chantingAppAnalytics')) {
+                    const initialData = {
+                        totalVisits: 0,
+                        sessions: [],
+                        chantStats: {},
+                        totalChants: 0,
+                        firstVisit: new Date().toISOString(),
+                        lastVisit: null
+                    };
+                    localStorage.setItem('chantingAppAnalytics', JSON.stringify(initialData));
+                }
+                this.recordVisit();
+            },
+
+            // Record a page visit
+            recordVisit: function() {
+                const data = this.getData();
+                data.totalVisits++;
+                data.lastVisit = new Date().toISOString();
+                this.saveData(data);
+                console.log('📊 Visit recorded. Total visits:', data.totalVisits);
+            },
+
+            // Record when a chanting session starts
+            recordSessionStart: function(chant, count, musicType) {
+                const session = {
+                    id: Date.now(),
+                    chant: chant,
+                    targetCount: count,
+                    completedCount: 0,
+                    musicType: musicType,
+                    startTime: new Date().toISOString(),
+                    endTime: null,
+                    completed: false
+                };
+                
+                const data = this.getData();
+                data.sessions.push(session);
+                this.saveData(data);
+                
+                console.log('🕉️ Session started:', session);
+                return session.id;
+            },
+
+            // Record each chant
+            recordChant: function(chant) {
+                const data = this.getData();
+                
+                // Update chant statistics
+                if (!data.chantStats[chant]) {
+                    data.chantStats[chant] = {
+                        name: chant,
+                        totalCount: 0,
+                        sessions: 0
+                    };
+                }
+                data.chantStats[chant].totalCount++;
+                data.totalChants++;
+                
+                // Update current session
+                const currentSession = data.sessions[data.sessions.length - 1];
+                if (currentSession) {
+                    currentSession.completedCount++;
+                }
+                
+                this.saveData(data);
+            },
+
+            // Record when session completes
+            recordSessionComplete: function(chant, completedCount) {
+                const data = this.getData();
+                const currentSession = data.sessions[data.sessions.length - 1];
+                
+                if (currentSession) {
+                    currentSession.endTime = new Date().toISOString();
+                    currentSession.completed = true;
+                    currentSession.completedCount = completedCount;
+                }
+                
+                // Update chant stats
+                if (data.chantStats[chant]) {
+                    data.chantStats[chant].sessions++;
+                }
+                
+                this.saveData(data);
+                console.log('✅ Session completed:', currentSession);
+            },
+
+            // Get all analytics data
+            getData: function() {
+                return JSON.parse(localStorage.getItem('chantingAppAnalytics'));
+            },
+
+            // Save analytics data
+            saveData: function(data) {
+                localStorage.setItem('chantingAppAnalytics', JSON.stringify(data));
+            },
+
+            // Display KPIs in console (for admin viewing)
+            showKPIs: function() {
+                const data = this.getData();
+                console.clear();
+                console.log('═══════════════════════════════════════');
+                console.log('📊 CHANTING APP ANALYTICS DASHBOARD');
+                console.log('═══════════════════════════════════════');
+                console.log('');
+                console.log('📈 OVERVIEW:');
+                console.log('  Total Visits:', data.totalVisits);
+                console.log('  Total Sessions:', data.sessions.length);
+                console.log('  Total Chants Completed:', data.totalChants);
+                console.log('  First Visit:', new Date(data.firstVisit).toLocaleString());
+                console.log('  Last Visit:', data.lastVisit ? new Date(data.lastVisit).toLocaleString() : 'N/A');
+                console.log('');
+                console.log('🕉️ CHANT STATISTICS:');
+                
+                // Sort chants by popularity
+                const sortedChants = Object.values(data.chantStats)
+                    .sort((a, b) => b.totalCount - a.totalCount);
+                
+                sortedChants.forEach((chant, index) => {
+                    console.log(`  ${index + 1}. ${chant.name}`);
+                    console.log(`     Total Chants: ${chant.totalCount}`);
+                    console.log(`     Sessions: ${chant.sessions}`);
+                    console.log(`     Avg per Session: ${chant.sessions > 0 ? Math.round(chant.totalCount / chant.sessions) : 0}`);
+                });
+                
+                console.log('');
+                console.log('📅 RECENT SESSIONS (Last 10):');
+                const recentSessions = data.sessions.slice(-10).reverse();
+                recentSessions.forEach((session, index) => {
+                    const duration = session.endTime 
+                        ? Math.round((new Date(session.endTime) - new Date(session.startTime)) / 1000 / 60)
+                        : 'In Progress';
+                    console.log(`  ${index + 1}. ${session.chant}`);
+                    console.log(`     Target: ${session.targetCount}, Completed: ${session.completedCount}`);
+                    console.log(`     Started: ${new Date(session.startTime).toLocaleString()}`);
+                    console.log(`     Duration: ${duration} ${typeof duration === 'number' ? 'min' : ''}`);
+                    console.log(`     Status: ${session.completed ? '✅ Completed' : '⏸️ Incomplete'}`);
+                });
+                
+                console.log('');
+                console.log('═══════════════════════════════════════');
+                console.log('💡 TIP: Type Analytics.showKPIs() anytime to view this dashboard');
+                console.log('💡 TIP: Type Analytics.exportData() to download data as JSON');
+                console.log('═══════════════════════════════════════');
+            },
+
+            // Export data as downloadable JSON
+            exportData: function() {
+                const data = this.getData();
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `chanting-app-analytics-${Date.now()}.json`;
+                link.click();
+                console.log('✅ Analytics data exported!');
+            },
+
+            // Clear all analytics (use with caution)
+            clearData: function() {
+                if (confirm('Are you sure you want to clear all analytics data? This cannot be undone.')) {
+                    localStorage.removeItem('chantingAppAnalytics');
+                    this.init();
+                    console.log('🗑️ Analytics data cleared and reset.');
+                }
+            }
+        };
+
+        // Initialize analytics when page loads
+        Analytics.init();
+
+        // Make Analytics available globally for console access
+        window.Analytics = Analytics;
+
         // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Chant button selection
@@ -638,6 +820,9 @@
             completedCount = 0;
             filledPositions = [];
             malaRotation = 0; // Reset mala rotation
+
+            // 📊 Record session start
+            Analytics.recordSessionStart(currentChant, totalCount, musicOption);
 
             // Switch screens
             document.getElementById('selectionScreen').classList.remove('active');
@@ -864,7 +1049,7 @@
                 const yPos = startY + (index * lineHeight);
                 
                 // Draw outline
-                ctx.strokeStyle = '#000000';
+                ctx.strokeStyle = '#1e3a8a';
                 ctx.lineWidth = 3;
                 ctx.strokeText(line, centerX, yPos);
                 
@@ -897,6 +1082,9 @@
             }
 
             completedCount++;
+            
+            // 📊 Record each chant
+            Analytics.recordChant(currentChant);
             
             // Rotate mala
             const beadsToShow = Math.min(totalCount, 108);
@@ -1019,6 +1207,9 @@
                 oscillator.stop();
             }
             isPlaying = false;
+
+            // 📊 Record session completion
+            Analytics.recordSessionComplete(currentChant, completedCount);
 
             // Update completion screen
             document.getElementById('completedChant').textContent = currentChant;
