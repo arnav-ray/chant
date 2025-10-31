@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spiritual Chanting App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,7 +15,7 @@
         }
 
         body {
-            font-family: 'Georgia', serif;
+            font-family: 'Lora', serif;
             background: linear-gradient(135deg, #FFF5E6 0%, #FFE4CC 100%);
             min-height: 100vh;
             display: flex;
@@ -33,16 +36,20 @@
 
         h1 {
             color: #FF8C00;
+            font-family: 'Crimson Text', serif;
             font-size: 2.5em;
+            font-weight: 700;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(255, 140, 0, 0.3);
         }
 
         .subtitle {
             color: #D2691E;
+            font-family: 'Lora', serif;
             font-size: 1.1em;
             margin-bottom: 30px;
             font-style: italic;
+            font-weight: 400;
         }
 
         .screen {
@@ -85,7 +92,7 @@
 
         .count-buttons {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 10px;
             margin-bottom: 15px;
         }
@@ -221,8 +228,8 @@
         .chanting-canvas-container {
             position: relative;
             width: 100%;
-            height: 450px;
-            margin: 30px 0;
+            height: 350px;
+            margin: 20px 0;
             background: linear-gradient(135deg, #FFF9F0 0%, #FFE4CC 100%);
             border-radius: 15px;
             border: 3px solid #FFB366;
@@ -230,6 +237,25 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
+        }
+
+        .bottom-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0 20px 0;
+        }
+
+        .mala-container {
+            width: 200px;
+            height: 200px;
+            flex-shrink: 0;
+        }
+
+        #malaCanvas {
+            width: 100%;
+            height: 100%;
         }
 
         #chantingCanvas {
@@ -263,7 +289,7 @@
             font-weight: bold;
         }
 
-        .chant-btn {
+        .chanting-screen .chant-btn {
             width: 200px;
             height: 200px;
             border-radius: 50%;
@@ -275,15 +301,15 @@
             cursor: pointer;
             transition: transform 0.1s, box-shadow 0.1s;
             box-shadow: 0 10px 30px rgba(255, 140, 0, 0.5);
-            margin: 20px auto;
+            flex-shrink: 0;
         }
 
-        .chant-btn:hover {
+        .chanting-screen .chant-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 15px 40px rgba(255, 140, 0, 0.7);
         }
 
-        .chant-btn:active {
+        .chanting-screen .chant-btn:active {
             transform: scale(0.95);
         }
 
@@ -363,11 +389,25 @@
             h1 {
                 font-size: 2em;
             }
+
+            .chanting-canvas-container {
+                height: 280px;
+            }
+
+            .bottom-section {
+                flex-direction: row;
+                gap: 20px;
+            }
             
-            .chant-btn {
+            .chanting-screen .chant-btn {
                 width: 150px;
                 height: 150px;
                 font-size: 1.2em;
+            }
+
+            .mala-container {
+                width: 150px;
+                height: 150px;
             }
 
             .chant-buttons {
@@ -376,6 +416,12 @@
 
             .count-buttons {
                 grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 900px) {
+            .chanting-canvas-container {
+                height: 320px;
             }
         }
     </style>
@@ -405,9 +451,10 @@
                 <label>Select Count:</label>
                 <div class="count-buttons">
                     <button type="button" class="count-btn" data-count="9">9</button>
+                    <button type="button" class="count-btn" data-count="12">12</button>
                     <button type="button" class="count-btn active" data-count="108">108</button>
-                    <button type="button" class="count-btn" data-count="1001">1001</button>
-                    <button type="button" class="count-btn" data-count="10001">10001</button>
+                    <button type="button" class="count-btn" data-count="1008">1008</button>
+                    <button type="button" class="count-btn" data-count="10008">10008</button>
                 </div>
                 <input type="number" id="customCount" placeholder="Or enter custom count..." min="1">
             </div>
@@ -437,9 +484,7 @@
         </div>
 
         <!-- Chanting Screen -->
-        <div id="chantingScreen" class="screen">
-            <h1 id="chantTitle"></h1>
-            
+        <div id="chantingScreen" class="screen chanting-screen">
             <div class="chanting-canvas-container">
                 <canvas id="chantingCanvas"></canvas>
             </div>
@@ -455,7 +500,13 @@
                 </div>
             </div>
 
-            <button class="chant-btn" onclick="chant()">CHANT</button>
+            <div class="bottom-section">
+                <div class="mala-container">
+                    <canvas id="malaCanvas"></canvas>
+                </div>
+                
+                <button class="chant-btn" onclick="chant()">CHANT</button>
+            </div>
 
             <div class="sound-controls">
                 <button class="sound-btn" id="pauseBtn" onclick="toggleSound()">Pause Music</button>
@@ -491,6 +542,7 @@
         let totalCount = 0;
         let completedCount = 0;
         let canvas, ctx;
+        let malaCanvas, malaCtx;
         let filledPositions = [];
         let soundEnabled = true;
         let audioContext, oscillator, gainNode;
@@ -498,59 +550,63 @@
         let uploadedAudio = null;
         let selectedCount = 108;
         let selectedChant = 'Om';
+        let malaRotation = 0;
 
-        // Chant button selection
-        document.querySelectorAll('.chant-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.chant-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedChant = this.dataset.chant;
-                document.getElementById('customChant').value = '';
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chant button selection
+            document.querySelectorAll('.chant-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.chant-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedChant = this.dataset.chant;
+                    document.getElementById('customChant').value = '';
+                });
             });
-        });
 
-        // Custom chant input
-        document.getElementById('customChant').addEventListener('input', function() {
-            if (this.value) {
-                document.querySelectorAll('.chant-btn').forEach(b => b.classList.remove('active'));
-                selectedChant = this.value.trim();
-            }
-        });
-
-        // Count button selection
-        document.querySelectorAll('.count-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedCount = parseInt(this.dataset.count);
-                document.getElementById('customCount').value = '';
+            // Custom chant input
+            document.getElementById('customChant').addEventListener('input', function() {
+                if (this.value) {
+                    document.querySelectorAll('.chant-btn').forEach(b => b.classList.remove('active'));
+                    selectedChant = this.value.trim();
+                }
             });
-        });
 
-        // Custom count input
-        document.getElementById('customCount').addEventListener('input', function() {
-            if (this.value) {
-                document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
-                selectedCount = parseInt(this.value);
-            }
-        });
-
-        // Music option radio buttons
-        document.querySelectorAll('input[name="musicOption"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const uploadSection = document.getElementById('musicUploadSection');
-                uploadSection.style.display = this.value === 'own' ? 'block' : 'none';
+            // Count button selection
+            document.querySelectorAll('.count-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedCount = parseInt(this.dataset.count);
+                    document.getElementById('customCount').value = '';
+                });
             });
-        });
 
-        // Music upload
-        document.getElementById('musicUpload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                uploadedAudio = new Audio(url);
-                uploadedAudio.loop = true;
-            }
+            // Custom count input
+            document.getElementById('customCount').addEventListener('input', function() {
+                if (this.value) {
+                    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+                    selectedCount = parseInt(this.value);
+                }
+            });
+
+            // Music option radio buttons
+            document.querySelectorAll('input[name="musicOption"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const uploadSection = document.getElementById('musicUploadSection');
+                    uploadSection.style.display = this.value === 'own' ? 'block' : 'none';
+                });
+            });
+
+            // Music upload
+            document.getElementById('musicUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    uploadedAudio = new Audio(url);
+                    uploadedAudio.loop = true;
+                }
+            });
         });
 
         function startChanting() {
@@ -581,6 +637,7 @@
 
             completedCount = 0;
             filledPositions = [];
+            malaRotation = 0; // Reset mala rotation
 
             // Switch screens
             document.getElementById('selectionScreen').classList.remove('active');
@@ -598,8 +655,6 @@
                     startBackgroundMusic();
                 }
             }
-
-            document.getElementById('chantTitle').textContent = currentChant;
         }
 
         function setupCanvas() {
@@ -611,10 +666,106 @@
             canvas.width = container.clientWidth - 40;
             canvas.height = container.clientHeight - 40;
 
+            // Setup mala canvas
+            malaCanvas = document.getElementById('malaCanvas');
+            malaCtx = malaCanvas.getContext('2d');
+            malaCanvas.width = 200;
+            malaCanvas.height = 200;
+            
             drawChantWithFill();
+            drawMala();
+        }
+
+        function drawMala() {
+            if (!malaCtx) return;
+            
+            const centerX = malaCanvas.width / 2;
+            const centerY = malaCanvas.height / 2;
+            const radius = 80;
+            
+            // Clear canvas
+            malaCtx.clearRect(0, 0, malaCanvas.width, malaCanvas.height);
+            
+            // Draw thread (string that connects beads)
+            malaCtx.strokeStyle = '#8B4513';
+            malaCtx.lineWidth = 2;
+            malaCtx.beginPath();
+            malaCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            malaCtx.stroke();
+            
+            // Calculate how many beads to draw
+            const beadsToShow = Math.min(totalCount, 108); // Max 108 beads for visual clarity
+            const beadSize = beadsToShow <= 27 ? 8 : beadsToShow <= 54 ? 6 : 4;
+            
+            // Draw beads
+            for (let i = 0; i < beadsToShow; i++) {
+                const angle = (i / beadsToShow) * Math.PI * 2 - Math.PI / 2 + malaRotation;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                // Determine if this bead is "completed"
+                const beadProgress = (completedCount / totalCount) * beadsToShow;
+                const isCompleted = i < beadProgress;
+                
+                // Draw bead
+                malaCtx.beginPath();
+                malaCtx.arc(x, y, beadSize, 0, Math.PI * 2);
+                
+                // Rudraksha color - brown/dark brown
+                if (isCompleted) {
+                    malaCtx.fillStyle = '#8B4513'; // Dark brown (completed)
+                } else {
+                    malaCtx.fillStyle = '#D2691E'; // Light brown (pending)
+                }
+                malaCtx.fill();
+                
+                // Add texture lines for rudraksha effect
+                if (beadSize >= 6) {
+                    malaCtx.strokeStyle = '#654321';
+                    malaCtx.lineWidth = 1;
+                    malaCtx.beginPath();
+                    malaCtx.moveTo(x - beadSize * 0.6, y);
+                    malaCtx.lineTo(x + beadSize * 0.6, y);
+                    malaCtx.stroke();
+                }
+            }
+            
+            // Draw Guru bead (larger, at top)
+            const guruAngle = -Math.PI / 2 + malaRotation;
+            const guruX = centerX + radius * Math.cos(guruAngle);
+            const guruY = centerY + radius * Math.sin(guruAngle);
+            
+            malaCtx.beginPath();
+            malaCtx.arc(guruX, guruY, beadSize * 1.5, 0, Math.PI * 2);
+            malaCtx.fillStyle = completedCount >= totalCount ? '#FF8C00' : '#8B4513';
+            malaCtx.fill();
+            malaCtx.strokeStyle = '#654321';
+            malaCtx.lineWidth = 2;
+            malaCtx.stroke();
+            
+            // Add tassel below guru bead
+            malaCtx.strokeStyle = '#FF8C00';
+            malaCtx.lineWidth = 3;
+            malaCtx.beginPath();
+            malaCtx.moveTo(guruX, guruY + beadSize * 1.5);
+            malaCtx.lineTo(guruX, guruY + beadSize * 3);
+            malaCtx.stroke();
+            
+            // Tassel strands
+            for (let i = -2; i <= 2; i++) {
+                malaCtx.strokeStyle = '#FF8C00';
+                malaCtx.lineWidth = 1;
+                malaCtx.beginPath();
+                malaCtx.moveTo(guruX, guruY + beadSize * 3);
+                malaCtx.lineTo(guruX + i * 3, guruY + beadSize * 4);
+                malaCtx.stroke();
+            }
         }
 
         function drawChantWithFill() {
+            // Safety check: don't draw if currentChant is not set
+            if (!currentChant || !ctx) return;
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             const centerX = canvas.width / 2;
@@ -625,7 +776,7 @@
             
             // Dynamically calculate font size to fit the text
             let fontSize = 120;
-            ctx.font = `bold ${fontSize}px Georgia`;
+            ctx.font = `bold ${fontSize}px Crimson Text`;
             let metrics = ctx.measureText(currentChant);
             
             // Check if text needs to wrap (too long for one line)
@@ -643,7 +794,7 @@
                     
                     for (const word of words) {
                         const testLine = currentLine ? currentLine + ' ' + word : word;
-                        ctx.font = `bold ${fontSize}px Georgia`;
+                        ctx.font = `bold ${fontSize}px Crimson Text`;
                         const testMetrics = ctx.measureText(testLine);
                         
                         if (testMetrics.width > maxWidth && currentLine) {
@@ -669,7 +820,7 @@
                     // Single word or short phrase - just reduce font size
                     while (metrics.width > maxWidth && fontSize > 30) {
                         fontSize -= 5;
-                        ctx.font = `bold ${fontSize}px Georgia`;
+                        ctx.font = `bold ${fontSize}px Crimson Text`;
                         metrics = ctx.measureText(currentChant);
                     }
                 }
@@ -677,7 +828,7 @@
             
             // Ensure font size is reasonable
             fontSize = Math.max(30, Math.min(120, fontSize));
-            ctx.font = `bold ${fontSize}px Georgia`;
+            ctx.font = `bold ${fontSize}px Crimson Text`;
             
             // Recalculate line wrapping with final font size if needed
             if (lines.length > 1) {
@@ -687,7 +838,7 @@
                 
                 for (const word of words) {
                     const testLine = currentLine ? currentLine + ' ' + word : word;
-                    ctx.font = `bold ${fontSize}px Georgia`;
+                    ctx.font = `bold ${fontSize}px Crimson Text`;
                     const testMetrics = ctx.measureText(testLine);
                     
                     if (testMetrics.width > maxWidth && currentLine) {
@@ -713,7 +864,7 @@
                 const yPos = startY + (index * lineHeight);
                 
                 // Draw outline
-                ctx.strokeStyle = '#FF8C00';
+                ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 3;
                 ctx.strokeText(line, centerX, yPos);
                 
@@ -747,8 +898,13 @@
 
             completedCount++;
             
-            // Redraw with updated fill
+            // Rotate mala
+            const beadsToShow = Math.min(totalCount, 108);
+            malaRotation += (Math.PI * 2) / beadsToShow;
+            
+            // Redraw with updated fill and mala
             drawChantWithFill();
+            drawMala();
             updateCounter();
 
             // Play chant sound
@@ -933,6 +1089,9 @@
                 canvas.width = container.clientWidth - 40;
                 canvas.height = container.clientHeight - 40;
                 drawChantWithFill();
+            }
+            if (malaCanvas && malaCtx) {
+                drawMala();
             }
         });
     </script>
